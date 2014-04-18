@@ -7610,6 +7610,7 @@ static int qos_header_parser(request_rec * r) {
       }
     }
     
+    /* QS_EventNewKBytesPerSecLimit */
     {
       qs_actable_t *act = sconf->act;
       qs_acentry_t *e = act->entry;
@@ -7619,8 +7620,14 @@ static int qos_header_parser(request_rec * r) {
           if ((e->event[0] == '!'
                && apr_table_get(r->subprocess_env, &e->event[1]) == NULL)
               || apr_table_get(r->subprocess_env, e->event)) {
-            ap_add_output_filter("qos-out-filter-bandwidth", NULL, r, r->connection);
-            rctx->hard_limit_e = e;
+            if (rctx->is_vip) {
+              rctx->evmsg = apr_pstrcat(r->pool, "S;", rctx->evmsg, NULL);
+            }
+            else {
+              rctx->evmsg = apr_pstrcat(r->pool, "L;", rctx->evmsg, NULL);
+              ap_add_output_filter("qos-out-filter-bandwidth", NULL, r, r->connection);
+              rctx->hard_limit_e = e;
+            }
             break;
           }
         }
