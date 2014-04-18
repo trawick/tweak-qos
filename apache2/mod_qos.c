@@ -1543,14 +1543,14 @@ static qos_s_entry_t **qos_cc_set(qos_s_t *s, qos_s_entry_t *pA, time_t now) {
 }
 
 /* 000-255 */
-int qos_dec32c(const char *x) {
+static int qos_dec32c(const char *x) {
   char buf[4];
   strncpy(buf, x, 3);
   buf[3] = '\0';
   return atoi(buf);
 }
 
-int qos_dec22c(const char *x) {
+static int qos_dec22c(const char *x) {
   char buf[4];
   strncpy(buf, x, 2);
   buf[2] = '\0';
@@ -1562,7 +1562,7 @@ int qos_dec22c(const char *x) {
  * @param x
  * @return hex value
  */
-int qos_hex2c(const char *x) {
+static int qos_hex2c(const char *x) {
   int i, ch;
   ch = x[0];
   if (isdigit(ch)) {
@@ -5302,8 +5302,8 @@ static int qos_req_rate_calc(qos_srv_config *sconf, int *current) {
   return req_rate;
 }
 
-qos_s_entry_limit_conf_t *qos_getQSLimitEvent(qos_user_t *u, const char *event,
-                                              int *limitTableIndex) {
+static qos_s_entry_limit_conf_t *qos_getQSLimitEvent(qos_user_t *u, const char *event,
+                                                     int *limitTableIndex) {
   int i = 0;
   apr_table_entry_t *limitTableEntry = (apr_table_entry_t *)apr_table_elts(u->qos_cc->limitTable)->elts;
   for(i = 0; i < apr_table_elts(u->qos_cc->limitTable)->nelts; i++) {
@@ -8027,8 +8027,8 @@ static apr_status_t qos_out_filter_min(ap_filter_t *f, apr_bucket_brigade *bb) {
  * @param o_rfilter_table Over rule table (child)
  * @return Merged table
  */
-apr_table_t *qos_table_merge_create(apr_pool_t *p, apr_table_t *b_rfilter_table,
-                                    apr_table_t *o_rfilter_table) {
+static apr_table_t *qos_table_merge_create(apr_pool_t *p, apr_table_t *b_rfilter_table,
+                                           apr_table_t *o_rfilter_table) {
   int i;
   apr_table_t *rfilter_table = apr_table_make(p, apr_table_elts(b_rfilter_table)->nelts +
                                               apr_table_elts(o_rfilter_table)->nelts);
@@ -9712,7 +9712,7 @@ static void *qos_srv_config_merge(apr_pool_t *p, void *basev, void *addv) {
   return o;
 }
 
-const char *qos_logonly_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_logonly_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -9723,7 +9723,7 @@ const char *qos_logonly_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   return NULL;
 }
 
-const char *qos_mfile_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
+static const char *qos_mfile_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   apr_finfo_t finfo;
@@ -9757,7 +9757,7 @@ const char *qos_mfile_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
 /**
  * command to define the concurrent request limitation for a location
  */
-const char *qos_loc_con_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
+static const char *qos_loc_con_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, loc);
@@ -9780,7 +9780,7 @@ const char *qos_loc_con_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const c
 /**
  * QS_LocRequestPerSecLimit: command to define the req/sec limitation for a location
  */
-const char *qos_loc_rs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
+static const char *qos_loc_rs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, loc);
@@ -9803,7 +9803,7 @@ const char *qos_loc_rs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const ch
 /**
  * QS_LocKBytesPerSecLimit: command to define the kbytes/sec limitation for a location
  */
-const char *qos_loc_bs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
+static const char *qos_loc_bs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, loc);
@@ -9827,7 +9827,7 @@ const char *qos_loc_bs_cmd(cmd_parms *cmd, void *dcfg, const char *loc, const ch
  * QS_LocRequestLimitMatch: defines the maximum of concurrent requests matching the specified
  * request line pattern
  */
-const char *qos_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
+static const char *qos_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, match);
@@ -9859,7 +9859,7 @@ const char *qos_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match, con
  * QS_CondLocRequestLimitMatch: defines the maximum of concurrent requests
  * matching the specified request line pattern
  */
-const char *qos_cond_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match,
+static const char *qos_cond_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match,
                                    const char *limit, const char *pattern) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
@@ -9894,7 +9894,7 @@ const char *qos_cond_match_con_cmd(cmd_parms *cmd, void *dcfg, const char *match
  * QS_LocRequestPerSecLimitMatch: defines the maximum requests/sec for
  * the matching request line pattern
  */
-const char *qos_match_rs_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
+static const char *qos_match_rs_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, match);
@@ -9926,7 +9926,7 @@ const char *qos_match_rs_cmd(cmd_parms *cmd, void *dcfg, const char *match, cons
  * QS_LocKBytesPerSecLimitMatch: defines the maximum kbytes/sec for
  * the matching request line pattern
  */
-const char *qos_match_bs_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
+static const char *qos_match_bs_cmd(cmd_parms *cmd, void *dcfg, const char *match, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule = (qs_rule_ctx_t *)apr_table_get(sconf->location_t, match);
@@ -9957,14 +9957,14 @@ const char *qos_match_bs_cmd(cmd_parms *cmd, void *dcfg, const char *match, cons
 /**
  * sets the default limitation of cuncurrent requests
  */
-const char *qos_loc_con_def_cmd(cmd_parms *cmd, void *dcfg, const char *limit) {
+static const char *qos_loc_con_def_cmd(cmd_parms *cmd, void *dcfg, const char *limit) {
   return qos_loc_con_cmd(cmd, dcfg, "/", limit);
 }
 
 /**
  * QS_EventRequestLimit: defines the number of concurrent events
  */
-const char *qos_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
+static const char *qos_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule =  (qs_rule_ctx_t *)apr_pcalloc(cmd->pool, sizeof(qs_rule_ctx_t));
@@ -10003,7 +10003,7 @@ const char *qos_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *event, con
 /**
  * QS_EventPerSecLimit: defines the maximum requests/sec for the matching variable.
  */
-const char *qos_event_rs_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
+static const char *qos_event_rs_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule =  (qs_rule_ctx_t *)apr_pcalloc(cmd->pool, sizeof(qs_rule_ctx_t));
@@ -10026,7 +10026,7 @@ const char *qos_event_rs_cmd(cmd_parms *cmd, void *dcfg, const char *event, cons
 /**
  * QS_EventKBytesPerSecLimit: maximum download per event
  */
-const char *qos_event_bps_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
+static const char *qos_event_bps_cmd(cmd_parms *cmd, void *dcfg, const char *event, const char *limit) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule =  (qs_rule_ctx_t *)apr_pcalloc(cmd->pool, sizeof(qs_rule_ctx_t));
@@ -10046,8 +10046,8 @@ const char *qos_event_bps_cmd(cmd_parms *cmd, void *dcfg, const char *event, con
   return NULL;
 }
 
-const char *qos_event_limit_cmd(cmd_parms *cmd, void *dcfg, const char *event,
-                                const char *number, const char *seconds) {
+static const char *qos_event_limit_cmd(cmd_parms *cmd, void *dcfg, const char *event,
+                                       const char *number, const char *seconds) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_event_limit_entry_t *new = apr_array_push(sconf->event_limit_a);
@@ -10066,7 +10066,7 @@ const char *qos_event_limit_cmd(cmd_parms *cmd, void *dcfg, const char *event,
   return NULL;
 }
 
-const char *qos_event_setenvstatus_cmd(cmd_parms *cmd, void *dcfg, const char *rc, const char *var) {
+static const char *qos_event_setenvstatus_cmd(cmd_parms *cmd, void *dcfg, const char *rc, const char *var) {
   apr_table_t *setenvstatus_t;
   if(cmd->path) {
     qos_dir_config *dconf = (qos_dir_config*)dcfg;
@@ -10109,8 +10109,8 @@ const char *qos_event_setenvstatus_cmd(cmd_parms *cmd, void *dcfg, const char *r
 }
 
 /** QS_SetEnvIfResBody */
-const char *qos_event_setenvresbody_cmd(cmd_parms *cmd, void *dcfg, const char *pattern,
-                                        const char *var) {
+static const char *qos_event_setenvresbody_cmd(cmd_parms *cmd, void *dcfg, const char *pattern,
+                                               const char *var) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   if(dconf->response_pattern) {
     return apr_psprintf(cmd->pool, "%s: only one pattern must be configured for a location",
@@ -10122,8 +10122,8 @@ const char *qos_event_setenvresbody_cmd(cmd_parms *cmd, void *dcfg, const char *
 }
 
 /* QS_SetEnv */
-const char *qos_setenv_cmd(cmd_parms *cmd, void *dcfg, const char *variable,
-                           const char *value) {
+static const char *qos_setenv_cmd(cmd_parms *cmd, void *dcfg, const char *variable,
+                                  const char *value) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   if(!variable[0] || !value[0]) {
@@ -10139,8 +10139,8 @@ const char *qos_setenv_cmd(cmd_parms *cmd, void *dcfg, const char *variable,
 }
 
 /* QS_SetReqHeader */
-const char *qos_setreqheader_cmd(cmd_parms *cmd, void *dcfg, const char *header,
-                                 const char *variable, const char *late) {
+static const char *qos_setreqheader_cmd(cmd_parms *cmd, void *dcfg, const char *header,
+                                        const char *variable, const char *late) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
 
@@ -10167,23 +10167,23 @@ const char *qos_setreqheader_cmd(cmd_parms *cmd, void *dcfg, const char *header,
 }
 
 /* QS_UnsetResHeader */
-const char *qos_unsetresheader_cmd(cmd_parms *cmd, void *dcfg, const char *header) {
+static const char *qos_unsetresheader_cmd(cmd_parms *cmd, void *dcfg, const char *header) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   apr_table_set(sconf->unsetresheader_t, header, "");
   return NULL;
 }
 
-const char *qos_event_setenvresheader_cmd(cmd_parms *cmd, void *dcfg, const char *hdr,
-                                          const char *action) {
+static const char *qos_event_setenvresheader_cmd(cmd_parms *cmd, void *dcfg, const char *hdr,
+                                                 const char *action) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   apr_table_set(sconf->setenvresheader_t, hdr, action == NULL ? "" : action);
   return NULL;
 }
 
-const char *qos_event_setenvresheadermatch_cmd(cmd_parms *cmd, void *dcfg, const char *hdr,
-                                               const char *pcres) {
+static const char *qos_event_setenvresheadermatch_cmd(cmd_parms *cmd, void *dcfg, const char *hdr,
+                                                      const char *pcres) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *errptr = NULL;
@@ -10200,8 +10200,8 @@ const char *qos_event_setenvresheadermatch_cmd(cmd_parms *cmd, void *dcfg, const
   return NULL;
 }
 
-const char *qos_redirectif_cmd(cmd_parms *cmd, void *dcfg, const char *var,
-                               const char *pattern, const char *url) {
+static const char *qos_redirectif_cmd(cmd_parms *cmd, void *dcfg, const char *var,
+                                      const char *pattern, const char *url) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
@@ -10225,8 +10225,8 @@ const char *qos_redirectif_cmd(cmd_parms *cmd, void *dcfg, const char *var,
   return NULL;
 }
 
-const char *qos_setenvres_cmd(cmd_parms *cmd, void *dcfg, const char *var,
-                              const char *pattern, const char *var2) {
+static const char *qos_setenvres_cmd(cmd_parms *cmd, void *dcfg, const char *var,
+                                     const char *pattern, const char *var2) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_pregval_t *pregval = apr_pcalloc(cmd->pool, sizeof(qos_pregval_t));
@@ -10249,8 +10249,8 @@ const char *qos_setenvres_cmd(cmd_parms *cmd, void *dcfg, const char *var,
   return NULL;
 }
 
-const char *qos_event_setenvif_cmd(cmd_parms *cmd, void *dcfg, const char *v1, const char *v2,
-                                   const char *a3) {
+static const char *qos_event_setenvif_cmd(cmd_parms *cmd, void *dcfg, const char *v1, const char *v2,
+                                          const char *a3) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_setenvif_t *setenvif = apr_pcalloc(cmd->pool, sizeof(qos_setenvif_t));
@@ -10273,7 +10273,7 @@ const char *qos_event_setenvif_cmd(cmd_parms *cmd, void *dcfg, const char *v1, c
   return NULL;
 }
 
-const char *qos_event_setenvifquery_cmd(cmd_parms *cmd, void *dcfg, const char *rx, const char *v) {
+static const char *qos_event_setenvifquery_cmd(cmd_parms *cmd, void *dcfg, const char *rx, const char *v) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_setenvifquery_t *setenvif = apr_pcalloc(cmd->pool, sizeof(qos_setenvifquery_t));
@@ -10304,8 +10304,8 @@ const char *qos_event_setenvifquery_cmd(cmd_parms *cmd, void *dcfg, const char *
   return NULL;
 }
 
-const char *qos_event_setenvifparpbody_cmd(cmd_parms *cmd, void *dcfg,
-                                           const char *rx, const char *v) {
+static const char *qos_event_setenvifparpbody_cmd(cmd_parms *cmd, void *dcfg,
+                                                  const char *rx, const char *v) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_setenvifparpbody_t *setenvif = apr_pcalloc(cmd->pool, sizeof(qos_setenvifparpbody_t));
@@ -10344,7 +10344,7 @@ const char *qos_event_setenvifparpbody_cmd(cmd_parms *cmd, void *dcfg,
   return NULL;
 }
 
-const char *qos_event_setenvifparp_cmd(cmd_parms *cmd, void *dcfg, const char *rx, const char *v) {
+static const char *qos_event_setenvifparp_cmd(cmd_parms *cmd, void *dcfg, const char *rx, const char *v) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qos_setenvifquery_t *setenvif = apr_pcalloc(cmd->pool, sizeof(qos_setenvifquery_t));
@@ -10379,7 +10379,7 @@ const char *qos_event_setenvifparp_cmd(cmd_parms *cmd, void *dcfg, const char *r
 /**
  * defines custom error page
  */
-const char *qos_error_page_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
+static const char *qos_error_page_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->error_page = apr_pstrdup(cmd->pool, path);
@@ -10394,7 +10394,7 @@ const char *qos_error_page_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
 /**
  * path to chrooted jail
  */
-const char *qos_chroot_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
+static const char *qos_chroot_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
   char cwd[2048] = "";
   qos_srv_config *sconf = ap_get_module_config(cmd->server->module_config, &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -10421,7 +10421,7 @@ const char *qos_chroot_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
 /**
  * global error code setting
  */
-const char *qos_error_code_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
+static const char *qos_error_code_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
   int idx500 = ap_index_of_response(HTTP_INTERNAL_SERVER_ERROR);
   if (err != NULL) {
@@ -10443,8 +10443,8 @@ const char *qos_error_code_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
 }
 
 /** QS_UserTrackingCookieName */
-const char *qos_user_tracking_cookie_cmd(cmd_parms *cmd, void *dcfg, const char *name,
-                                         const char *force) {
+static const char *qos_user_tracking_cookie_cmd(cmd_parms *cmd, void *dcfg, const char *name,
+                                                const char *force) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->user_tracking_cookie = apr_pstrdup(cmd->pool, name);
@@ -10462,21 +10462,21 @@ const char *qos_user_tracking_cookie_cmd(cmd_parms *cmd, void *dcfg, const char 
 /**
  * session definitions: cookie name and path, expiration/max-age
  */
-const char *qos_cookie_name_cmd(cmd_parms *cmd, void *dcfg, const char *name) {
+static const char *qos_cookie_name_cmd(cmd_parms *cmd, void *dcfg, const char *name) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->cookie_name = apr_pstrdup(cmd->pool, name);
   return NULL;
 }
 
-const char *qos_cookie_path_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
+static const char *qos_cookie_path_cmd(cmd_parms *cmd, void *dcfg, const char *path) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->cookie_path = apr_pstrdup(cmd->pool, path);
   return NULL;
 }
 
-const char *qos_timeout_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
+static const char *qos_timeout_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->max_age = atoi(sec);
@@ -10487,7 +10487,7 @@ const char *qos_timeout_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
   return NULL;
 }
 
-const char *qos_key_cmd(cmd_parms *cmd, void *dcfg, const char *seed) {
+static const char *qos_key_cmd(cmd_parms *cmd, void *dcfg, const char *seed) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   EVP_BytesToKey(EVP_des_ede3_cbc(), EVP_sha1(), NULL,
@@ -10499,7 +10499,7 @@ const char *qos_key_cmd(cmd_parms *cmd, void *dcfg, const char *seed) {
 /**
  * name of the http header to mark a vip
  */
-const char *qos_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, const char *drop) {
+static const char *qos_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, const char *drop) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *name = apr_pstrdup(cmd->pool, n);
@@ -10528,7 +10528,7 @@ const char *qos_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, const
   return NULL;
 }
 
-const char *qos_ip_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, const char *drop) {
+static const char *qos_ip_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, const char *drop) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *name = apr_pstrdup(cmd->pool, n);
@@ -10557,14 +10557,14 @@ const char *qos_ip_header_name_cmd(cmd_parms *cmd, void *dcfg, const char *n, co
   return NULL;
 }
 
-const char *qos_vip_u_cmd(cmd_parms *cmd, void *dcfg) {
+static const char *qos_vip_u_cmd(cmd_parms *cmd, void *dcfg) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->vip_user = 1;
   return NULL;
 }
 
-const char *qos_vip_ip_u_cmd(cmd_parms *cmd, void *dcfg) {
+static const char *qos_vip_ip_u_cmd(cmd_parms *cmd, void *dcfg) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->vip_ip_user = 1;
@@ -10574,7 +10574,7 @@ const char *qos_vip_ip_u_cmd(cmd_parms *cmd, void *dcfg) {
 /**
  * max concurrent connections per server
  */
-const char *qos_max_conn_cmd(cmd_parms *cmd, void *dcfg, const char *number) {
+static const char *qos_max_conn_cmd(cmd_parms *cmd, void *dcfg, const char *number) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->max_conn = atoi(number);
@@ -10588,7 +10588,7 @@ const char *qos_max_conn_cmd(cmd_parms *cmd, void *dcfg, const char *number) {
 /**
  * QS_SrvMaxConnClose, disable keep-alive
  */
-const char *qos_max_conn_close_cmd(cmd_parms *cmd, void *dcfg, const char *number) {
+static const char *qos_max_conn_close_cmd(cmd_parms *cmd, void *dcfg, const char *number) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *n = apr_pstrdup(cmd->temp_pool, number);
@@ -10615,8 +10615,8 @@ const char *qos_max_conn_close_cmd(cmd_parms *cmd, void *dcfg, const char *numbe
 /**
  * max concurrent connections per client ip
  */
-const char *qos_max_conn_ip_cmd(cmd_parms *cmd, void *dcfg, const char *number,
-                                const char *connections) {
+static const char *qos_max_conn_ip_cmd(cmd_parms *cmd, void *dcfg, const char *number,
+                                       const char *connections) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->max_conn_per_ip = atoi(number);
@@ -10638,7 +10638,7 @@ const char *qos_max_conn_ip_cmd(cmd_parms *cmd, void *dcfg, const char *number,
 /**
  * ip address without any limitation
  */
-const char *qos_max_conn_ex_cmd(cmd_parms *cmd, void *dcfg, const char *addr) {
+static const char *qos_max_conn_ex_cmd(cmd_parms *cmd, void *dcfg, const char *addr) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   if(addr[strlen(addr)-1] == '.') {
@@ -10650,7 +10650,7 @@ const char *qos_max_conn_ex_cmd(cmd_parms *cmd, void *dcfg, const char *addr) {
   }
   return NULL;
 }
-const char *qos_req_rate_off_cmd(cmd_parms *cmd, void *dcfg) {
+static const char *qos_req_rate_off_cmd(cmd_parms *cmd, void *dcfg) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->min_rate_off = 1;
@@ -10670,7 +10670,7 @@ static int qos_sprintfcheck() {
   return 1;
 }
 
-const char *qos_req_rate_cmd(cmd_parms *cmd, void *dcfg, const char *sec, const char *secmax) {
+static const char *qos_req_rate_cmd(cmd_parms *cmd, void *dcfg, const char *sec, const char *secmax) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -10701,7 +10701,7 @@ const char *qos_req_rate_cmd(cmd_parms *cmd, void *dcfg, const char *sec, const 
 }
 
 /* QS_SrvMinDataRateOffEvent */
-const char *qos_min_rate_off_cmd(cmd_parms *cmd, void *dcfg, const char *var) {
+static const char *qos_min_rate_off_cmd(cmd_parms *cmd, void *dcfg, const char *var) {
   apr_table_t *disable_reqrate_events;
   if(cmd->path) {
     qos_dir_config *dconf = (qos_dir_config*)dcfg;
@@ -10720,9 +10720,9 @@ const char *qos_min_rate_off_cmd(cmd_parms *cmd, void *dcfg, const char *var) {
 }
 
 #ifdef AP_TAKE_ARGV
-const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
+static const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
 #else
-const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, const char *_sec, const char *_secmax)
+static const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, const char *_sec, const char *_secmax)
 #endif
 {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
@@ -10784,9 +10784,9 @@ const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, const char *_sec, const
 /**
  * generic filter command
  */
-const char *qos_deny_cmd(cmd_parms *cmd, void *dcfg,
-                         const char *id, const char *action, const char *pcres,
-                         qs_rfilter_type_e type, int options) {
+static const char *qos_deny_cmd(cmd_parms *cmd, void *dcfg,
+                                const char *id, const char *action, const char *pcres,
+                                qs_rfilter_type_e type, int options) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   qos_rfilter_t *flt = apr_pcalloc(cmd->pool, sizeof(qos_rfilter_t));
   const char *errptr = NULL;
@@ -10820,27 +10820,27 @@ const char *qos_deny_cmd(cmd_parms *cmd, void *dcfg,
   apr_table_setn(dconf->rfilter_table, apr_pstrdup(cmd->pool, id), (char *)flt);
   return NULL;
 }
-const char *qos_deny_rql_cmd(cmd_parms *cmd, void *dcfg,
-                             const char *id, const char *action, const char *pcres) {
+static const char *qos_deny_rql_cmd(cmd_parms *cmd, void *dcfg,
+                                    const char *id, const char *action, const char *pcres) {
   return qos_deny_cmd(cmd, dcfg, id, action, pcres, QS_DENY_REQUEST_LINE, PCRE_CASELESS);
 }
-const char *qos_deny_path_cmd(cmd_parms *cmd, void *dcfg,
-                              const char *id, const char *action, const char *pcres) {
+static const char *qos_deny_path_cmd(cmd_parms *cmd, void *dcfg,
+                                     const char *id, const char *action, const char *pcres) {
   return qos_deny_cmd(cmd, dcfg, id, action, pcres, QS_DENY_PATH, PCRE_CASELESS);
 }
-const char *qos_deny_query_cmd(cmd_parms *cmd, void *dcfg,
-                               const char *id, const char *action, const char *pcres) {
+static const char *qos_deny_query_cmd(cmd_parms *cmd, void *dcfg,
+                                      const char *id, const char *action, const char *pcres) {
   return qos_deny_cmd(cmd, dcfg, id, action, pcres, QS_DENY_QUERY, PCRE_CASELESS);
 }
-const char *qos_deny_event_cmd(cmd_parms *cmd, void *dcfg,
-                               const char *id, const char *action, const char *event) {
+static const char *qos_deny_event_cmd(cmd_parms *cmd, void *dcfg,
+                                      const char *id, const char *action, const char *event) {
   return qos_deny_cmd(cmd, dcfg, id, action, event, QS_DENY_EVENT, 0);
 }
-const char *qos_permit_uri_cmd(cmd_parms *cmd, void *dcfg,
-                               const char *id, const char *action, const char *pcres) {
+static const char *qos_permit_uri_cmd(cmd_parms *cmd, void *dcfg,
+                                      const char *id, const char *action, const char *pcres) {
   return qos_deny_cmd(cmd, dcfg, id, action, pcres, QS_PERMIT_URI, 0);
 }
-const char *qos_deny_urlenc_cmd(cmd_parms *cmd, void *dcfg, const char *mode) {
+static const char *qos_deny_urlenc_cmd(cmd_parms *cmd, void *dcfg, const char *mode) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   if(strcasecmp(mode, "log") == 0) {
     dconf->urldecoding = QS_LOG;
@@ -10855,7 +10855,7 @@ const char *qos_deny_urlenc_cmd(cmd_parms *cmd, void *dcfg, const char *mode) {
   return NULL;
 }
 
-const char *qos_milestone_tmo_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
+static const char *qos_milestone_tmo_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
   qos_srv_config *sconf = ap_get_module_config(cmd->server->module_config, &qos_module);
   sconf->milestone_timeout = atoi(sec);
   if(sconf->milestone_timeout <= 0) {
@@ -10865,8 +10865,8 @@ const char *qos_milestone_tmo_cmd(cmd_parms *cmd, void *dcfg, const char *sec) {
   return NULL;
 }
 
-const char *qos_milestone_cmd(cmd_parms *cmd, void *dcfg, const char *action,
-                              const char *pattern) {
+static const char *qos_milestone_cmd(cmd_parms *cmd, void *dcfg, const char *action,
+                                     const char *pattern) {
   qos_srv_config *sconf = ap_get_module_config(cmd->server->module_config, &qos_module);
   const char *errptr = NULL;
   int erroffset;
@@ -10899,7 +10899,7 @@ const char *qos_milestone_cmd(cmd_parms *cmd, void *dcfg, const char *action,
   return NULL;
 }
 
-const char *qos_maxpost_cmd(cmd_parms *cmd, void *dcfg, const char *bytes) {
+static const char *qos_maxpost_cmd(cmd_parms *cmd, void *dcfg, const char *bytes) {
   apr_off_t s;
   char *errp = NULL;
 #ifdef ap_http_scheme
@@ -10927,7 +10927,7 @@ const char *qos_maxpost_cmd(cmd_parms *cmd, void *dcfg, const char *bytes) {
 }
 
 /* QS_Decoding */
-const char *qos_dec_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
+static const char *qos_dec_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
 //  if(strcasecmp(arg, "html") == 0) {
 //    dconf->dec_mode |= QOS_DEC_MODE_FLAGS_HTML;
@@ -10943,13 +10943,13 @@ const char *qos_dec_cmd(cmd_parms *cmd, void *dcfg, const char *arg) {
   return NULL;
 }
 
-const char *qos_denyinheritoff_cmd(cmd_parms *cmd, void *dcfg) {
+static const char *qos_denyinheritoff_cmd(cmd_parms *cmd, void *dcfg) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   dconf->inheritoff = 1;
   return NULL;
 }
 
-const char *qos_denybody_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_denybody_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   dconf->bodyfilter_p = flag;
   dconf->bodyfilter_d = flag;
@@ -10959,7 +10959,7 @@ const char *qos_denybody_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   return NULL;
 }
 
-const char *qos_denybody_d_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_denybody_d_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   dconf->bodyfilter_d = flag;
   if(flag) {
@@ -10968,7 +10968,7 @@ const char *qos_denybody_d_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   return NULL;
 }
 
-const char *qos_denybody_p_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_denybody_p_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   dconf->bodyfilter_p = flag;
   if(flag) {
@@ -10978,7 +10978,7 @@ const char *qos_denybody_p_cmd(cmd_parms *cmd, void *dcfg, int flag) {
 }
 
 /* QS_RequestHeaderFilter enables/disables header filter */
-const char *qos_headerfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag) {
+static const char *qos_headerfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag) {
   qs_headerfilter_mode_e headerfilter;
   if(strcasecmp(flag, "on") == 0) {
     headerfilter = QS_HEADERFILTER_ON;
@@ -11001,7 +11001,7 @@ const char *qos_headerfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag) {
 }
 
 /* QS_ResponseHeaderFilter */
-const char *qos_resheaderfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag) {
+static const char *qos_resheaderfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag) {
   qos_dir_config *dconf = (qos_dir_config*)dcfg;
   if(strcasecmp(flag, "on") == 0) {
     dconf->resheaderfilter = QS_HEADERFILTER_ON;
@@ -11019,11 +11019,11 @@ const char *qos_resheaderfilter_cmd(cmd_parms *cmd, void *dcfg, const char *flag
 /* QS_RequestHeaderFilterRule: set custom header rules (global only)
    name, action, pcre, size */
 #ifdef AP_TAKE_ARGV
-const char *qos_headerfilter_rule_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
+static const char *qos_headerfilter_rule_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
 #else
-const char *qos_headerfilter_rule_cmd(cmd_parms *cmd, void *dcfg, 
-                                      const char *header, const char *action,
-                                      const char *rule)
+static const char *qos_headerfilter_rule_cmd(cmd_parms *cmd, void *dcfg, 
+                                             const char *header, const char *action,
+                                             const char *rule)
 #endif
   {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
@@ -11082,9 +11082,9 @@ const char *qos_headerfilter_rule_cmd(cmd_parms *cmd, void *dcfg,
   return NULL;
 }
 
-const char *qos_resheaderfilter_rule_cmd(cmd_parms *cmd, void *dcfg, 
-                                         const char *header,
-                                         const char *rule, const char *size) {
+static const char *qos_resheaderfilter_rule_cmd(cmd_parms *cmd, void *dcfg, 
+                                                const char *header,
+                                                const char *rule, const char *size) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *errptr = NULL;
@@ -11116,7 +11116,7 @@ const char *qos_resheaderfilter_rule_cmd(cmd_parms *cmd, void *dcfg,
   return NULL;  
 }
 
-const char *qos_geodb_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_geodb_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *msg = NULL;
@@ -11133,7 +11133,7 @@ const char *qos_geodb_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   return NULL;
 }
 
-const char *qos_geopriv_cmd(cmd_parms *cmd, void *dcfg, const char *list, const char *con) {
+static const char *qos_geopriv_cmd(cmd_parms *cmd, void *dcfg, const char *list, const char *con) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *next = apr_pstrdup(cmd->pool, list);
@@ -11165,7 +11165,7 @@ const char *qos_geopriv_cmd(cmd_parms *cmd, void *dcfg, const char *list, const 
   return NULL;
 }
 
-const char *qos_enable_ipv6_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_enable_ipv6_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11180,7 +11180,7 @@ const char *qos_enable_ipv6_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   return NULL;
 }
 
-const char *qos_client_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_client_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11209,9 +11209,9 @@ const char *qos_client_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
 }
 
 #ifdef AP_TAKE_ARGV
-const char *qos_client_pref_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
+static const char *qos_client_pref_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[])
 #else
-const char *qos_client_pref_cmd(cmd_parms *cmd, void *dcfg)
+static const char *qos_client_pref_cmd(cmd_parms *cmd, void *dcfg)
 #endif
   {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
@@ -11240,8 +11240,8 @@ const char *qos_client_pref_cmd(cmd_parms *cmd, void *dcfg)
   return NULL;
 }
 
-const char *qos_client_block_cmd(cmd_parms *cmd, void *dcfg, const char *arg1,
-                                 const char *arg2) {
+static const char *qos_client_block_cmd(cmd_parms *cmd, void *dcfg, const char *arg1,
+                                        const char *arg2) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11264,9 +11264,9 @@ const char *qos_client_block_cmd(cmd_parms *cmd, void *dcfg, const char *arg1,
   return NULL;
 }
 
-const char *qos_client_limit_int_cmd(cmd_parms *cmd, void *dcfg, const char *arg_number,
-                                     const char *arg_sec, const char *arg_varname,
-                                     const char *arg_condition) {
+static const char *qos_client_limit_int_cmd(cmd_parms *cmd, void *dcfg, const char *arg_number,
+                                            const char *arg_sec, const char *arg_varname,
+                                            const char *arg_condition) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   char *limit_name = QS_LIMIT_DEFAULT;
@@ -11319,14 +11319,14 @@ const char *qos_client_limit_int_cmd(cmd_parms *cmd, void *dcfg, const char *arg
 }
 
 /* QS_ClientEventLimitCount <number> <seconds> <variable> */
-const char *qos_client_limit_cmd(cmd_parms *cmd, void *dcfg, const char *arg_number,
-                                 const char *arg_sec, const char *arg_varname) {
+static const char *qos_client_limit_cmd(cmd_parms *cmd, void *dcfg, const char *arg_number,
+                                        const char *arg_sec, const char *arg_varname) {
   return qos_client_limit_int_cmd(cmd, dcfg, arg_number, arg_sec, arg_varname, NULL);
 }
 
 #ifdef AP_TAKE_ARGV
 /* QS_CondClientEventLimitCount <number> <seconds> <variable> <pattern> */
-const char *qos_cond_client_limit_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[]) {
+static const char *qos_cond_client_limit_cmd(cmd_parms *cmd, void *dcfg, int argc, char *const argv[]) {
   if(argc != 4) {
     return apr_psprintf(cmd->pool, "%s: takes 4 arguments",
                         cmd->directive->directive);
@@ -11335,7 +11335,7 @@ const char *qos_cond_client_limit_cmd(cmd_parms *cmd, void *dcfg, int argc, char
 }
 #endif
 
-const char *qos_client_forwardedfor_cmd(cmd_parms *cmd, void *dcfg, const char *header) {
+static const char *qos_client_forwardedfor_cmd(cmd_parms *cmd, void *dcfg, const char *header) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11346,7 +11346,7 @@ const char *qos_client_forwardedfor_cmd(cmd_parms *cmd, void *dcfg, const char *
   return NULL;
 }
 
-const char *qos_client_serial_cmd(cmd_parms *cmd, void *dcfg) {
+static const char *qos_client_serial_cmd(cmd_parms *cmd, void *dcfg) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11358,7 +11358,7 @@ const char *qos_client_serial_cmd(cmd_parms *cmd, void *dcfg) {
   return NULL;
 }
 
-const char *qos_req_rate_tm_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_req_rate_tm_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11373,7 +11373,7 @@ const char *qos_req_rate_tm_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   return NULL;
 }
 
-const char *qos_client_tolerance_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_client_tolerance_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11389,7 +11389,7 @@ const char *qos_client_tolerance_cmd(cmd_parms *cmd, void *dcfg, const char *arg
 }
 
 #ifdef AP_TAKE_ARGV
-const char *qos_client_contenttype(cmd_parms *cmd, void *dcfg, int argc, char *const argv[]) {
+static const char *qos_client_contenttype(cmd_parms *cmd, void *dcfg, int argc, char *const argv[]) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   if(argc != 5) {
@@ -11427,7 +11427,7 @@ const char *qos_client_contenttype(cmd_parms *cmd, void *dcfg, int argc, char *c
 }
 #endif
 
-const char *qos_client_event_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_client_event_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11443,7 +11443,7 @@ const char *qos_client_event_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   return NULL;
 }
 
-const char *qos_client_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
+static const char *qos_client_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
@@ -11459,7 +11459,7 @@ const char *qos_client_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *arg
   return NULL;
 }
 
-const char *qos_disable_handler_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_disable_handler_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->disable_handler = flag;
@@ -11467,7 +11467,7 @@ const char *qos_disable_handler_cmd(cmd_parms *cmd, void *dcfg, int flag) {
 }
 
 #ifdef QS_INTERNAL_TEST
-const char *qos_disable_int_ip_cmd(cmd_parms *cmd, void *dcfg, int flag) {
+static const char *qos_disable_int_ip_cmd(cmd_parms *cmd, void *dcfg, int flag) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   sconf->enable_testip = flag;
