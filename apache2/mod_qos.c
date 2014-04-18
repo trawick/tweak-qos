@@ -91,6 +91,10 @@ static const char g_revision[] = "10.30";
 #include "mod_qos.h"
 #endif
 
+#ifdef APLOG_USE_MODULE
+APLOG_USE_MODULE(qos);
+#endif
+
 /************************************************************************
  * defines
  ***********************************************************************/
