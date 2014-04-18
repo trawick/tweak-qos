@@ -7989,7 +7989,7 @@ static apr_status_t qos_out_filter_bandwidth(ap_filter_t *f, apr_bucket_brigade 
   concurrency = 1 + apr_atomic_inc32(&e->hard_limit_concurrency);
 
   while (!APR_BRIGADE_EMPTY(bb)) {
-    apr_bucket *first, *next;
+    apr_bucket *b, *first, *next;
     apr_bucket_brigade *tmp_bb;
 
     /* How long do we sleep after sending?
@@ -8018,6 +8018,16 @@ static apr_status_t qos_out_filter_bandwidth(ap_filter_t *f, apr_bucket_brigade 
     tmp_bb = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
     APR_BRIGADE_INSERT_TAIL(tmp_bb, first);
 
+    /* A flush bucket is required when passing down small pieces,
+     * else we have really poor utilization of the pipeline
+     * (i.e., we'll use much less than the configured bandwidth).
+     * It isn't so important when passing down big pieces since
+     * most will be sent, but there's no use leaving the last
+     * fragment buffered until after we sleep again.
+     */
+    b = apr_bucket_flush_create(f->c->bucket_alloc);
+    APR_BRIGADE_INSERT_TAIL(tmp_bb, b);
+
     rv = ap_pass_brigade(f->next, tmp_bb);
     if (rv != APR_SUCCESS) {
       apr_atomic_dec32(&e->hard_limit_concurrency);
@@ -8034,12 +8044,14 @@ static apr_status_t qos_out_filter_bandwidth(ap_filter_t *f, apr_bucket_brigade 
   }
 
   if (our_share_per_time_quantum) {
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-                  "Sleeping, concurrency %u, our rate %"
-                  APR_OFF_T_FMT "per quantum",
-                  concurrency, our_share_per_time_quantum);
-    /* don't sleep full quantum, since this is the remainder */
     rv = apr_brigade_length(bb, 1, &length);
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, rv, r,
+                  "Sleeping, concurrency %u, our rate %"
+                  APR_OFF_T_FMT " per quantum (have %"
+                  APR_OFF_T_FMT ")",
+                  concurrency, our_share_per_time_quantum,
+                  rv == APR_SUCCESS ? length : 0);
+    /* don't sleep full quantum, since this is the remainder */
     if (rv == APR_SUCCESS) {
       apr_sleep(normal_sleep * length / our_share_per_time_quantum);
     }
