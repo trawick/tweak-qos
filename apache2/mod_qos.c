@@ -1543,6 +1543,7 @@ static qos_s_entry_t **qos_cc_set(qos_s_t *s, qos_s_entry_t *pA, time_t now) {
 }
 
 /* 000-255 */
+#ifdef UNUSED
 static int qos_dec32c(const char *x) {
   char buf[4];
   strncpy(buf, x, 3);
@@ -1556,6 +1557,7 @@ static int qos_dec22c(const char *x) {
   buf[2] = '\0';
   return atoi(buf);
 }
+#endif
 
 /**
  * hex value for the char
@@ -10651,6 +10653,7 @@ static const char *qos_max_conn_ex_cmd(cmd_parms *cmd, void *dcfg, const char *a
   }
   return NULL;
 }
+#ifdef UNUSED
 static const char *qos_req_rate_off_cmd(cmd_parms *cmd, void *dcfg) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
@@ -10781,6 +10784,7 @@ static const char *qos_min_rate_cmd(cmd_parms *cmd, void *dcfg, const char *_sec
   }
   return NULL;
 }
+#endif
 
 /**
  * generic filter command
@@ -11359,6 +11363,7 @@ static const char *qos_client_serial_cmd(cmd_parms *cmd, void *dcfg) {
   return NULL;
 }
 
+#ifdef UNUSED
 static const char *qos_req_rate_tm_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
@@ -11373,6 +11378,7 @@ static const char *qos_req_rate_tm_cmd(cmd_parms *cmd, void *dcfg, const char *a
   }
   return NULL;
 }
+#endif
 
 static const char *qos_client_tolerance_cmd(cmd_parms *cmd, void *dcfg, const char *arg1) {
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
