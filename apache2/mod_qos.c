@@ -70,6 +70,7 @@ static const char g_revision[] = "10.30";
 
 /* apr / scrlib */
 #include <pcre.h>
+#include <apr_atomic.h>
 #include <apr_strings.h>
 #include <apr_file_info.h>
 #include <apr_base64.h>
@@ -522,6 +523,8 @@ typedef struct qs_acentry_st {
   long bytes;
   long kbytes_per_sec;
   long kbytes_per_sec_limit;
+  apr_off_t hard_kbytes_per_sec_limit;
+  apr_uint32_t hard_limit_concurrency;
   int kbytes_per_sec_block_rate;
   struct qs_acentry_st *next;
 } qs_acentry_t;
@@ -764,6 +767,7 @@ typedef struct {
   int cc_event_req_set;
   int cc_serialize_set;
   char *body_window;
+  qs_acentry_t *hard_limit_e;
 } qs_req_ctx;
 
 /**
@@ -786,6 +790,7 @@ typedef struct {
 #endif
   long req_per_sec_limit;
   long kbytes_per_sec_limit;
+  apr_off_t hard_kbytes_per_sec_limit;
 } qs_rule_ctx_t;
 
 typedef struct {
@@ -2316,6 +2321,7 @@ static apr_status_t qos_init_shm(server_rec *s, qos_srv_config *sconf, qs_actabl
       e->interval = apr_time_sec(apr_time_now());
       e->req_per_sec_limit = rule->req_per_sec_limit;
       e->kbytes_per_sec_limit = rule->kbytes_per_sec_limit;
+      e->hard_kbytes_per_sec_limit = rule->hard_kbytes_per_sec_limit;
       e->counter = 0;
       e->lock = act->lock;
       if(i < rule_entries - 1) {
@@ -7604,6 +7610,21 @@ static int qos_header_parser(request_rec * r) {
       }
     }
     
+    {
+      qs_actable_t *act = sconf->act;
+      qs_acentry_t *e = act->entry;
+      while (e) {
+        if (e->hard_kbytes_per_sec_limit
+            && e->event
+            && apr_table_get(r->subprocess_env, e->event)) {
+          ap_add_output_filter("qos-out-filter-bandwidth", NULL, r, r->connection);
+          rctx->hard_limit_e = e;
+          break;
+        }
+        e = e->next;
+      }
+    }
+
     /*
      * QS_EventKBytesPerSecLimit
      */
@@ -7943,6 +7964,90 @@ static apr_status_t qos_out_filter_body(ap_filter_t *f, apr_bucket_brigade *bb) 
     }
   }
   return ap_pass_brigade(f->next, bb);
+}
+
+static apr_status_t qos_out_filter_bandwidth(ap_filter_t *f, apr_bucket_brigade *bb) {
+  request_rec *r = f->r;
+  qs_req_ctx *rctx = qos_rctx_config_get(r);
+  qs_acentry_t *e = rctx->hard_limit_e;
+  apr_off_t length;
+  apr_status_t rv;
+  apr_uint32_t concurrency;
+  /* smoother, perhaps better network utilization down to client if we send
+   * smaller amounts more frequently, so try to send multiple times per second
+   *
+   * also, by checking concurrency relatively often we are fairly accurate
+   * without implementing any complex resource reservation scheme to deal with
+   * concurrency increasing while we sleep and/or implementing error correction
+   * over time (which would then require more blocking)
+   */
+  double time_quanta_per_sec = 4.0;
+  apr_interval_time_t normal_sleep =
+    (double)apr_time_from_sec(1) / time_quanta_per_sec;
+  apr_off_t our_share_per_time_quantum = 0;
+
+  concurrency = 1 + apr_atomic_inc32(&e->hard_limit_concurrency);
+
+  while (!APR_BRIGADE_EMPTY(bb)) {
+    apr_bucket *first, *next;
+    apr_bucket_brigade *tmp_bb;
+
+    /* How long do we sleep after sending?
+     * Calculate the number of requests going through here.
+     * We get to use hard_kbytes_per_sec_limit / concurrency.
+     * Send up to our fair share per time quantum, then sleep.
+     * Repeat until we worked through the brigade.
+     */
+
+    our_share_per_time_quantum =
+      (int)(1024.0 * (double)e->hard_kbytes_per_sec_limit / (double)concurrency /time_quanta_per_sec);
+
+    rv = apr_brigade_partition(bb, our_share_per_time_quantum, &next);
+    if (rv != APR_SUCCESS && rv != APR_INCOMPLETE) {
+      apr_atomic_dec32(&e->hard_limit_concurrency);
+      return HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    if (rv == APR_INCOMPLETE) { /* no split needed */
+      break;
+    }
+
+    first = APR_BRIGADE_FIRST(bb);
+    APR_BUCKET_REMOVE(first);
+        
+    tmp_bb = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
+    APR_BRIGADE_INSERT_TAIL(tmp_bb, first);
+
+    rv = ap_pass_brigade(f->next, tmp_bb);
+    if (rv != APR_SUCCESS) {
+      apr_atomic_dec32(&e->hard_limit_concurrency);
+      return rv;
+    }
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+                  "Sleeping, concurrency %u, our rate %"
+                  APR_OFF_T_FMT "per quantum",
+                  concurrency, our_share_per_time_quantum);
+    apr_sleep(normal_sleep);
+    /* probably changed during slumber */
+    concurrency = e->hard_limit_concurrency;
+  }
+
+  if (our_share_per_time_quantum) {
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+                  "Sleeping, concurrency %u, our rate %"
+                  APR_OFF_T_FMT "per quantum",
+                  concurrency, our_share_per_time_quantum);
+    /* don't sleep full quantum, since this is the remainder */
+    rv = apr_brigade_length(bb, 1, &length);
+    if (rv == APR_SUCCESS) {
+      apr_sleep(normal_sleep * length / our_share_per_time_quantum);
+    }
+  }
+
+  apr_atomic_dec32(&e->hard_limit_concurrency);
+
+  return ap_pass_brigade(f->next, bb); 
 }
 
 /**
@@ -10026,6 +10131,29 @@ static const char *qos_event_rs_cmd(cmd_parms *cmd, void *dcfg, const char *even
   return NULL;
 }
 
+static const char *qos_event_hard_bandwidth_cmd(cmd_parms *cmd, void *dcfg, const char *event,
+                                                const char *limit) {
+  qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
+                                                                &qos_module);
+  qs_rule_ctx_t *rule =  (qs_rule_ctx_t *)apr_pcalloc(cmd->pool, sizeof(qs_rule_ctx_t));
+  long tmp_limit;
+  char *endptr;
+  errno = 0;
+  tmp_limit = strtol(limit, &endptr, 10);
+  if (*endptr != '\0' || errno) {
+    return apr_pstrcat(cmd->pool, "Bad bandwidth limit: ", limit, NULL);
+  }
+  rule->hard_kbytes_per_sec_limit = tmp_limit;
+  rule->url = apr_pstrcat(cmd->pool, "var={", event, "}", NULL);
+  sconf->has_event_limit = 1;
+  rule->event = apr_pstrdup(cmd->pool, event);
+  rule->regex = NULL;
+  rule->condition = NULL;
+  rule->limit = -1;
+  apr_table_setn(sconf->location_t, rule->url, (char *)rule);
+  return NULL;
+}
+
 /**
  * QS_EventKBytesPerSecLimit: maximum download per event
  */
@@ -11724,6 +11852,8 @@ static const command_rec qos_config_cmds[] = {
                 " longer delay than smaller ones). By default, no limitation is active."
                 " This directive should be used in conjunction with QS_EventRequestLimit"
                 " only (you must use the same variable name for both directives)."),
+  AP_INIT_TAKE2("QS_EventNewKbytesPerSecLimit", qos_event_hard_bandwidth_cmd, NULL,
+                RSRC_CONF, "proposed reimplementation of bandwidth use per event"),
   AP_INIT_TAKE3("QS_EventLimitCount", qos_event_limit_cmd, NULL,
                 RSRC_CONF,
                 "QS_EventLimitCount <env-variable> <number> <seconds>,"
@@ -12093,6 +12223,7 @@ static void qos_register_hooks(apr_pool_t * p) {
   ap_register_output_filter("qos-out-filter-delay", qos_out_filter_delay, NULL, AP_FTYPE_RESOURCE+1);
   ap_register_output_filter("qos-out-filter-body", qos_out_filter_body, NULL, AP_FTYPE_RESOURCE+1);
   ap_register_output_filter("qos-out-err-filter", qos_out_err_filter, NULL, AP_FTYPE_RESOURCE+1);
+  ap_register_output_filter("qos-out-filter-bandwidth", qos_out_filter_bandwidth, NULL, AP_FTYPE_RESOURCE+1);
   ap_hook_insert_filter(qos_insert_filter, NULL, NULL, APR_HOOK_MIDDLE);
   ap_hook_insert_error_filter(qos_insert_err_filter, NULL, NULL, APR_HOOK_MIDDLE);
 
