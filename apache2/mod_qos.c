@@ -7615,11 +7615,14 @@ static int qos_header_parser(request_rec * r) {
       qs_acentry_t *e = act->entry;
       while (e) {
         if (e->hard_kbytes_per_sec_limit
-            && e->event
-            && apr_table_get(r->subprocess_env, e->event)) {
-          ap_add_output_filter("qos-out-filter-bandwidth", NULL, r, r->connection);
-          rctx->hard_limit_e = e;
-          break;
+            && e->event) {
+          if ((e->event[0] == '!'
+               && apr_table_get(r->subprocess_env, &e->event[1]) == NULL)
+              || apr_table_get(r->subprocess_env, e->event)) {
+            ap_add_output_filter("qos-out-filter-bandwidth", NULL, r, r->connection);
+            rctx->hard_limit_e = e;
+            break;
+          }
         }
         e = e->next;
       }

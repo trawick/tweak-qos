@@ -38,3 +38,10 @@ Now it is simply
 SetEnvIf Request_URI "."  TESTING
 QS_EventNewKBytesPerSecLimit TESTING 100
 ```
+
+Checking that an environment variable is **not** set also works:
+```
+QS_EventNewKBytesPerSecLimit !TESTING 100
+```
+
+(In other words, limit download bandwidth to 100K bytes per second if the TESTING variable is **not** defined.)
