@@ -1010,7 +1010,7 @@ static int qos_ip_str2long(const char *src, void *dst) {
   if(convert == NULL) {
     return 0;
   }
-  if((strchr(convert, ':') == NULL) && 
+  if((ap_strchr_c(convert, ':') == NULL) && 
      (strlen(convert) <= 15)) {
     // looks like an IPv4 address
     sprintf(str, QS_IP4IN6"%s", src);
@@ -5430,7 +5430,7 @@ static void qos_ext_status_short(request_rec *r, apr_table_t *qt) {
                    sconf->max_conn_close,
                    sconf->act->conn->connections);
       }
-      if(option && strstr(option, "ip")) {
+      if(option && ap_strstr_c(option, "ip")) {
         if(sconf->act->conn->connections) {
           apr_table_t *entries = apr_table_make(r->pool, 100);
           int j;
@@ -5544,7 +5544,7 @@ static void qos_show_ip(request_rec *r, qos_srv_config *sconf, apr_table_t *qt) 
     ap_rputs("      <td colspan=\"8\">\n", r);
     ap_rprintf(r, "        <form action=\"%s\" method=\"get\">\n",
                ap_escape_html(r->pool, r->parsed_uri.path ? r->parsed_uri.path : ""));
-    if(!option || (option && !strstr(option, "ip")) ) {
+    if(!option || (option && !ap_strstr_c(option, "ip")) ) {
       ap_rprintf(r, "          <input name=\"option\" value=\"ip\" type=\"hidden\">\n");
       ap_rprintf(r, "          <input name=\"action\" value=\"enable\" type=\"submit\">\n");
     } else {
@@ -5568,7 +5568,7 @@ static void qos_show_ip(request_rec *r, qos_srv_config *sconf, apr_table_t *qt) 
       ap_rputs("      <td colspan=\"8\">\n", r);
       ap_rprintf(r, "        <form action=\"%s\" method=\"get\">\n",
                  ap_escape_html(r->pool, r->parsed_uri.path ? r->parsed_uri.path : ""));
-      if(option && strstr(option, "ip")) {
+      if(option && ap_strstr_c(option, "ip")) {
         ap_rprintf(r, "          <input name=\"option\" value=\"ip\" type=\"hidden\">\n");
       }
       ap_rprintf(r, "          <input name=\"address\" value=\"%s\" type=\"text\">\n",
@@ -6072,7 +6072,7 @@ static int qos_ext_status_hook(request_rec *r, int flags) {
                      qos_server_connections(sconf));
         }
 
-        if(option && strstr(option, "ip")) {
+        if(option && ap_strstr_c(option, "ip")) {
           apr_table_t *entries = apr_table_make(r->pool, 100);
           int j;
           apr_table_entry_t *entry;
@@ -6530,7 +6530,8 @@ static char *qos_server_alias(request_rec *r, const char *server_hostname) {
  * @return schema/hostname
  */
 static char *qos_this_host(request_rec *r) {
-  const char *hostport= apr_table_get(r->headers_in, "Host");
+  const char *orig_hostport= apr_table_get(r->headers_in, "Host");
+  char *hostport;
   int port = 0;
   int ssl = 0;
   int default_port;
@@ -6538,10 +6539,10 @@ static char *qos_this_host(request_rec *r) {
   if(qos_is_https) {
     ssl = qos_is_https(r->connection);
   }
-  if(hostport) {
+  if(orig_hostport) {
     char *p;
-    hostport = apr_pstrdup(r->pool, hostport);
-    if((p = strchr(hostport, ':')) != NULL) {
+    hostport = apr_pstrdup(r->pool, orig_hostport);
+    if((p = ap_strchr(hostport, ':')) != NULL) {
       server_hostname = qos_server_alias(r, hostport);
       p[0] = '\0';
       p++;
@@ -8501,8 +8502,8 @@ static void qos_audit_check(ap_directive_t * node) {
   ap_directive_t *pdir;
   for(pdir = node; pdir != NULL; pdir = pdir->next) {
     if(pdir->args && 
-       strstr(pdir->args, "%{"QS_PARP_PATH"}n") &&
-       strstr(pdir->args, "%{"QS_PARP_QUERY"}n")) {
+       ap_strstr_c(pdir->args, "%{"QS_PARP_PATH"}n") &&
+       ap_strstr_c(pdir->args, "%{"QS_PARP_QUERY"}n")) {
       m_enable_audit = 1;
     }
     if(pdir->first_child != NULL) {
@@ -9968,7 +9969,7 @@ static const char *qos_event_req_cmd(cmd_parms *cmd, void *dcfg, const char *eve
   qos_srv_config *sconf = (qos_srv_config*)ap_get_module_config(cmd->server->module_config,
                                                                 &qos_module);
   qs_rule_ctx_t *rule =  (qs_rule_ctx_t *)apr_pcalloc(cmd->pool, sizeof(qs_rule_ctx_t));
-  char *p = strchr(event, '=');
+  const char *p = ap_strchr_c(event, '=');
   rule->url = apr_pstrcat(cmd->pool, "var=(", event, ")", NULL);
   rule->limit = atoi(limit);
   rule->req_per_sec_limit = 0;
@@ -10130,7 +10131,7 @@ static const char *qos_setenv_cmd(cmd_parms *cmd, void *dcfg, const char *variab
     return apr_psprintf(cmd->pool, "%s: invalid parameter",
                         cmd->directive->directive);
   }
-  if(strchr(variable, '=')) {
+  if(ap_strchr_c(variable, '=')) {
     return apr_psprintf(cmd->pool, "%s: variable must not contain a '='",
                         cmd->directive->directive);
   }
@@ -10148,7 +10149,7 @@ static const char *qos_setreqheader_cmd(cmd_parms *cmd, void *dcfg, const char *
     return apr_psprintf(cmd->pool, "%s: invalid parameter",
                         cmd->directive->directive);
   }
-  if(strchr(header, '=')) {
+  if(ap_strchr_c(header, '=')) {
     return apr_psprintf(cmd->pool, "%s: header name must not contain a '='",
                         cmd->directive->directive);
   }
