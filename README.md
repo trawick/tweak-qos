@@ -18,3 +18,23 @@ references
 
 * http://opensource.adnovum.ch/mod_qos/
 * http://sourceforge.net/projects/mod-qos/
+* https://sourceforge.net/p/mod-qos/discussion/697421/thread/957783bd/
+
+using the new implementation
+============================
+
+Previously, you might configure bandwidth limiting like this (presumably with a more interesting criterium for the event):
+```
+SetEnvIf Request_URI "."  TESTING
+QS_EventKBytesPerSecLimit TESTING 100
+QS_EventPerSecLimit       TESTING 999999
+QS_EventRequestLimit      TESTING 999999
+```
+
+(You need to configure more than just QS_EventKBytesPerSecLimit, even if you don't care about the other features.)
+
+Now it is simply
+```
+SetEnvIf Request_URI "."  TESTING
+QS_EventNewKBytesPerSecLimit TESTING 100
+```
