@@ -10162,7 +10162,7 @@ static const char *qos_event_hard_bandwidth_cmd(cmd_parms *cmd, void *dcfg, cons
   char *endptr;
   errno = 0;
   tmp_limit = strtol(limit, &endptr, 10);
-  if (*endptr != '\0' || errno) {
+  if (*endptr != '\0' || errno || tmp_limit < 1) {
     return apr_pstrcat(cmd->pool, "Bad bandwidth limit: ", limit, NULL);
   }
   rule->hard_kbytes_per_sec_limit = tmp_limit;
