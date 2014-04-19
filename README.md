@@ -45,3 +45,11 @@ QS_EventNewKBytesPerSecLimit !TESTING 100
 ```
 
 (In other words, limit download bandwidth to 100K bytes per second if the TESTING variable is **not** defined.)
+
+VIP selection is also supported.  (VIPs won't be limited to the configured bandwidth.)
+
+miscellaneous notes
+===================
+
+* If the response is relatively small compared with the limit (e.g., 50 byte response, 5K/second limit), the
+configured bandwidth will be underutilized (by perhaps 5%).
