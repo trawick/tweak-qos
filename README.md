@@ -20,6 +20,16 @@ references
 * http://sourceforge.net/projects/mod-qos/
 * https://sourceforge.net/p/mod-qos/discussion/697421/thread/957783bd/
 
+what is fixed?
+==============
+
+See the last reference above for the behavior I saw with the original implementation.  Besides resolving the basic behavior, it solves these additional problems:
+
+* doesn't cheat the client with content compressed by mod\_deflate
+  * The original bandwidth filter ran before mod\_deflate, so limiting output per time was done on uncompressed data, meaning that the client didn't get nearly enough data as they deserved.
+* doesn't require that the request go through mod_proxy or some other mechanism to split the data in manageable chunks
+  * The new bandwidth filter handles that automatically.
+
 using the new implementation
 ============================
 
