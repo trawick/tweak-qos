@@ -12245,7 +12245,10 @@ static void qos_register_hooks(apr_pool_t * p) {
   ap_register_output_filter("qos-out-filter-delay", qos_out_filter_delay, NULL, AP_FTYPE_RESOURCE+1);
   ap_register_output_filter("qos-out-filter-body", qos_out_filter_body, NULL, AP_FTYPE_RESOURCE+1);
   ap_register_output_filter("qos-out-err-filter", qos_out_err_filter, NULL, AP_FTYPE_RESOURCE+1);
-  ap_register_output_filter("qos-out-filter-bandwidth", qos_out_filter_bandwidth, NULL, AP_FTYPE_RESOURCE+1);
+  /* mod_ratelimit's explanation for AP_FTYPE_PROTOCOL+3:
+   * "run after mod_deflate etc etc, but not at connection level, ie, mod_ssl."
+   */
+  ap_register_output_filter("qos-out-filter-bandwidth", qos_out_filter_bandwidth, NULL, AP_FTYPE_PROTOCOL+3);
   ap_hook_insert_filter(qos_insert_filter, NULL, NULL, APR_HOOK_MIDDLE);
   ap_hook_insert_error_filter(qos_insert_err_filter, NULL, NULL, APR_HOOK_MIDDLE);
 
